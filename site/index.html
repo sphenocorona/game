@@ -1,0 +1,28 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title> Test </title>
+		<script src="game.js"></script>
+	</head>
+	<body>
+		<div id="uname_entry">
+			<label for="uname"> Username: </label>
+			<input type="text" id="uname" placeholder="Guest" />
+			<button type="button" id="rename" onclick="changeUsername()"> Change </button>
+		</div>
+		<div id="room_entry">
+			<label for="room"> Room Code: </label>
+			<input type="text" id="room" />
+			<button type="button" id="join" onclick="joinRoom()"> Join </button>
+			<button type="button" id="create" onclick="createRoom()"> Create your own </button>
+			<button type="button" id="leave" onclick="leaveRoom()"> Leave </button>
+		</div>
+		<div id="chatbox">
+			<div id="messages"></div>
+			<div id="bottom">
+				<textarea id="messagebox"></textarea>
+				<button type="button" id="send" onclick="sendMessage()"> Send </button>
+			</div>
+		</div>
+	</body>
+</html>

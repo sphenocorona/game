@@ -1,0 +1,5 @@
+{
+	"port": 8080,
+	"keepalive": 5000,
+	"timeout": 15000
+}
