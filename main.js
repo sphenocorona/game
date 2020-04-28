@@ -118,7 +118,7 @@ function getWSMessageHandler (ws) {
 					break;
 				}
 
-				clients[ws.id].private.players[ws.id] = clients[ws.id].public;
+				clients[ws.id].private.room = arg;
 
 				for (let clientID of rooms[arg]) {
 					clients[ws.id].private.players[clientID] = clients[clientID].public;
