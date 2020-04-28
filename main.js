@@ -123,7 +123,9 @@ function getWSMessageHandler (ws) {
 
 				for (let clientID of rooms[arg]) {
 					clients[ws.id].private.players[clientID] = clients[clientID].public;
+					clients[clientID].private.players[ws.id] = clients[ws.id].public;
 					clients[clientID].socket.send(`j${ws.id}`);
+					updateClient(ws.id);
 				}
 
 				console.log(`User ${ws.id} joined room ${arg}`);
