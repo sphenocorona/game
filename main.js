@@ -137,8 +137,6 @@ function getWSMessageHandler (ws) {
 			case "l": // Leave room
 				leaveRoom(ws.id);
 
-				updateClient(ws.id);
-
 				break;
 
 			case "s": // Send message
@@ -163,6 +161,7 @@ function getWSMessageHandler (ws) {
 				if (clients[ws.id].private.room) {
 					for (let clientID of rooms[clients[ws.id].private.room]) {
 						clients[clientID].socket.send(`c${ws.id}|${arg}`);
+						updateClient(clientID);
 					}
 				}
 
@@ -192,7 +191,9 @@ function leaveRoom (id) {
 		if (idx == 0) {
 			for (let clientID of rooms[room]) {
 				clients[clientID].socket.send("d");
-				delete clients[clientID].private.players[id];
+				clients[clientID].private.players = {};
+				clients[clientID].private.room = undefined;
+				updateClient(clientID);
 			}
 
 			delete rooms[room];
@@ -200,6 +201,7 @@ function leaveRoom (id) {
 			for (let clientID of rooms[room]) {
 				clients[clientID].socket.send("l" + id);
 				delete clients[clientID].private.players[id];
+				updateClient(clientID);
 			}
 
 			rooms[room].splice(idx, 1);
@@ -207,6 +209,7 @@ function leaveRoom (id) {
 
 		clients[id].private.room = undefined;
 		clients[id].private.players = {};
+		updateClient(id);
 
 		console.log(`User ${id} left room ${room}`);
 	}
