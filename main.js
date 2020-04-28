@@ -183,7 +183,7 @@ function updateClient (id) {
 function leaveRoom (id) {
 	let room = clients[id].private.room;
 
-	if (room) {
+	if (rooms[room]) {
 		let idx = rooms[room].indexOf(id);
 		let message = "";
 
