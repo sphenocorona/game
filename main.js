@@ -120,7 +120,7 @@ function getWSMessageHandler (ws) {
 
 				clients[ws.id].private.players[ws.id] = clients[ws.id].public;
 
-				for (let clientID of rooms[clients[ws.id].private.room]) {
+				for (let clientID of rooms[arg]) {
 					clients[ws.id].private.players[clientID] = clients[clientID].public;
 					clients[clientID].socket.send(`j${ws.id}`);
 				}
