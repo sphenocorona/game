@@ -118,7 +118,7 @@ class ScoredHand {
 		var has4ofaKind = 0;
 
 		var suits = Array(4).fill(0); // suit values work as the indices here
-		var suitsVals = Array(4).fill("").map(() => []); // makes an array of empty arrays
+		var suitsInd = Array(4).fill("").map(() => []); // makes an array of empty arrays
 
 		// The ordering of these arrays is A 2 3 4 5 ... 10 J Q K A
 		var values = Array(14).fill(0);
