@@ -71,11 +71,8 @@ class Hand {
 
 	// Clear the cards in the hand.
 	clearCards() {
-		var len = this.cards.length - 1
-		for (var i = 0; i < len; ++i) {
-			this.cards[i] = null;
-			this.faceups[i] = false;
-		}
+		this.cards.fill(null);
+		this.cards.fill(false);
 		return true;
 	}
 
@@ -109,77 +106,92 @@ class ScoredHand {
 		this.score(hole, community);
 	}
 
-	// TODO: Finish this function and also make it less horrible
+	// TODO: Finish this function
 	score(hole, community) {
 		var flush = -1;
-		var straights = [];
-		var strFlushes = [];
+		var straight = 0;
+		var strFlush = 0;
 		var fullHouse = 0;
 		var has4ofaKind = 0;
 
 		var suits = Array(4).fill(0); // suit values work as the indices here
-		var suitsInd = Array(4).fill("").map(() => []); // makes an array of empty arrays
+		var suitsVals = Array(4).fill("").map(() => []); // makes an array of empty arrays
 
 		// The ordering of these arrays is A 2 3 4 5 ... 10 J Q K A
 		var values = Array(14).fill(0);
-		var valuesInd = Array(14).fill("").map(() => []); // same deal as before
+		var valuesSuits = Array(14).fill("").map(() => []); // same deal as before
 
 		var cards = [hole, community];
 
 		var len = 0;
 		var cardval = 0;
+		var currCard = null;
 
 		// Catalog card type frequencies
 		for (var h = 0; h < 2; ++h) { // for both sets of cards
-			len = currArray[0].length;
+			len = cards[h].length;
 
 			for (let i = 0; i < len; ++i) { // record suit and value of each card.
-				if (cards[h][i].isAce()) { // aces are recorded in two places
-					++values[0]; ++values[13];
-					valuesInd[0][valuesInd[0].length] = [h, i];
-					valuesInd[13][valuesInd[13].length] = [h, i];
-				}
-				else if (cards[h][i] != null)
-				{
-					cardval = cards[h][i].getValue - 1;
-					++values[cardval];
-					valuesInd[cardval][valuesInd[cardval].length] = [h, i];
-				}
+				currCard = cards[h][i];
+				if (currCard !== null) {
+					if (currCard.isAce()) { // aces are recorded in two places
+						++values[0]; ++values[13];
+						valuesSuits[0][valuesSuits[0].length] = currCard.getSuit;
+						valuesSuits[13][valuesSuits[13].length] = currCard.getSuit;
+					} else {
+						cardval = currCard.getValue - 1;
+						++values[cardval];
+						valuesSuits[cardval][valuesSuits[cardval].length] = currCard.getSuit;
+					}
 
-				cardval = cards[h][i].getSuit;
-				++suits[cardval];
-				suitsInd[cardval][suitsInd[cardval].length] = [h, i];
+					cardval = currCard.getSuit;
+					++suits[cardval];
+					suitsVals[cardval][suitsVals[cardval].length] = currCard.getValue;
+				}
 			}
 		}
 
 		// Now to find what kind of hand the player actually has
-		// Flush
+		// Regular Flushes
 		for (let i = 0; i < 4; ++i) {
 			if (suits[i] >= 5)
 				flush = i;
 		}
+
 		// Straights & straight flushes
 		var valcount = 0;
-		var suitcount = 0;
-		var lastSuit = -1;
-		var currSuit = -1;
-		var currCard = null;
+		var seenSuits = Array(4).fill(false);
+		var straightSuits = Array(4).fill(0); //named this way because it's used in straight flush detect
+
 		for (let i = 0; i < 14; ++i) {
 			if (values[i] > 0)
 				++valcount;
 			else
 				valcount = 0;
 
-			len = valuesInd[i].length;
-			for (let j = 0; j < len; ++j) {
-				// holy shit is this ugly
-				// This finds the corresponding card and checks its suit
-				currSuit = cards[valuesInd[i][j][0]][valuesInd[i][j][1]].getSuit;
+			// track flushes occurring in straights
+			len = valuesSuits[i].length;
+			seenSuits.fill(false);
+
+			// this iterates through valuesSuits...
+			for (let j = 0; j < len; ++j)
+				++seenSuits[valuesSuits[i][j]];
+			// and THIS iterates through seenSuits.
+			for (let j = 0; j < 4; ++j) {
+				if (seenSuits[j] > 0)
+					++straightSuits[j];
+				else
+					straightSuits[j] = 0;
+
+				if (straightSuits[j] >= 5)
+					strFlush = i;
 			}
 
 			if (valcount >= 5)
-				straights[straights.length] = i;
+				straight = i;
 		}
+
+
 	}
 }
 
