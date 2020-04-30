@@ -78,6 +78,109 @@ class Hand {
 		}
 		return true;
 	}
+
+	getFullHand() {
+		return this.cards;
+	}
+
+	getVisibleHand() {
+		var result = [];
+		var len = this.cards.length;
+		for (let i = 0; i < len; ++i) {
+			if (this.faceups[i])
+				result[i] = this.cards[i];
+			else
+				result[i] = null;
+		}
+
+		return result;
+	}
+}
+
+// Takes the hand and community cards and finds the best hand that can be constructed from them.
+// Must be passed the arrays within them (this is because some game modes might want to make adjustments)
+// The actual scoring logic occurs in the 'score' function.
+class ScoredHand {
+	constructor(hole, community) {
+		this.score = 0;
+		this.holePicks = 0; // These two variables essentially behave as bitmasks.
+		this.commPicks = 0;
+
+		this.score(hole, community);
+	}
+
+	// TODO: Finish this function and also make it less horrible
+	score(hole, community) {
+		var flush = -1;
+		var straights = [];
+		var strFlushes = [];
+		var fullHouse = 0;
+		var has4ofaKind = 0;
+
+		var suits = Array(4).fill(0); // suit values work as the indices here
+		var suitsVals = Array(4).fill("").map(() => []); // makes an array of empty arrays
+
+		// The ordering of these arrays is A 2 3 4 5 ... 10 J Q K A
+		var values = Array(14).fill(0);
+		var valuesInd = Array(14).fill("").map(() => []); // same deal as before
+
+		var cards = [hole, community];
+
+		var len = 0;
+		var cardval = 0;
+
+		// Catalog card type frequencies
+		for (var h = 0; h < 2; ++h) { // for both sets of cards
+			len = currArray[0].length;
+
+			for (let i = 0; i < len; ++i) { // record suit and value of each card.
+				if (cards[h][i].isAce()) { // aces are recorded in two places
+					++values[0]; ++values[13];
+					valuesInd[0][valuesInd[0].length] = [h, i];
+					valuesInd[13][valuesInd[13].length] = [h, i];
+				}
+				else if (cards[h][i] != null)
+				{
+					cardval = cards[h][i].getValue - 1;
+					++values[cardval];
+					valuesInd[cardval][valuesInd[cardval].length] = [h, i];
+				}
+
+				cardval = cards[h][i].getSuit;
+				++suits[cardval];
+				suitsInd[cardval][suitsInd[cardval].length] = [h, i];
+			}
+		}
+
+		// Now to find what kind of hand the player actually has
+		// Flush
+		for (let i = 0; i < 4; ++i) {
+			if (suits[i] >= 5)
+				flush = i;
+		}
+		// Straights & straight flushes
+		var valcount = 0;
+		var suitcount = 0;
+		var lastSuit = -1;
+		var currSuit = -1;
+		var currCard = null;
+		for (let i = 0; i < 14; ++i) {
+			if (values[i] > 0)
+				++valcount;
+			else
+				valcount = 0;
+
+			len = valuesInd[i].length;
+			for (let j = 0; j < len; ++j) {
+				// holy shit is this ugly
+				// This finds the corresponding card and checks its suit
+				currSuit = cards[valuesInd[i][j][0]][valuesInd[i][j][1]].getSuit;
+			}
+
+			if (valcount >= 5)
+				straights[straights.length] = i;
+		}
+	}
 }
 
 // Contains a set of 52 cards that get referenced by other stuff. This is used to generate card deals
@@ -212,7 +315,7 @@ class Player {
 class Table {
 	constructor(deck, startChips) {
 		this.deck = deck;
-		this.players = [];
+		this.players = Array(12).fill(null);
 		this.idToPlayer = {};
 		this.playerCount = 0;
 		this.pot = 0;
@@ -220,10 +323,6 @@ class Table {
 		this.inProgress = false;
 		this.betCount = 0; // How many players are still in the hand.
 		this.inputWaiting = false;
-
-		for (let i = 0; i < 12; ++i) {
-			this.players[i] = null;
-		}
 	}
 
 	// Clean up stuff after the round is over and prepare for a new round.
@@ -268,7 +367,5 @@ class TexasTable extends Table {
 		super(deck, startChips);
 		this.button = 0;
 	}
-
-	
 
 }
