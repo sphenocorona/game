@@ -1,6 +1,25 @@
 "use strict";
 // var random = require('math-random');
 
+// See "hand scoring.txt" for an explanation of where these values come from.
+// They are defined so that 
+// coefficients
+const var C_STR_FLUSH = 341385748704;
+const var C_4_KIND    = 24384696336;
+const var C_FH_FLUSH  = 8128232112;
+const var C_STRAIGHT  = 738930192;
+const var C_3_KIND    = 52780728;
+const var C_BEST_PAIR = 3770052;
+const var C_NEXT_PAIR = 290004;
+const var C_KICKERS = [22308, 1716, 132, 11, 1];
+
+// offsets
+const var O_STRAIGHT  = 3;
+const var O_N_KIND    = 0;
+const var O_FACEVALUE = 1;
+
+// Alright, now to actual object declarations.
+
 // This object represents a single card in the game.
 // The format of the values within is:
 // Value: Jack = 11, Queen = 12, King = 13, Ace = 14.
@@ -108,12 +127,17 @@ class ScoredHand {
 
 	// TODO: Finish this function
 	score(hole, community) {
-		var flush = -1;
+		var flushes = [];
 		var straight = 0;
 		var strFlush = 0;
 		var fullHouse = 0;
-		var has4ofaKind = 0;
+		var has4ofaKind = -1;
+		var best3ofaKind = -1;
+		var bestPair = -1;
+		var nextPair = -1;
+		var highest = Array(5).fill(-1);
 
+		// Note that card face values are stored as ONE LESS than their actual value elsewhere.
 		var suits = Array(4).fill(0); // suit values work as the indices here
 		var suitsVals = Array(4).fill("").map(() => []); // makes an array of empty arrays
 
@@ -146,7 +170,7 @@ class ScoredHand {
 
 					cardval = currCard.getSuit;
 					++suits[cardval];
-					suitsVals[cardval][suitsVals[cardval].length] = currCard.getValue;
+					suitsVals[cardval][suitsVals[cardval].length] = currCard.getValue - 1;
 				}
 			}
 		}
@@ -155,13 +179,13 @@ class ScoredHand {
 		// Regular Flushes
 		for (let i = 0; i < 4; ++i) {
 			if (suits[i] >= 5)
-				flush = i;
+				flushes[flushes.length] = i;
 		}
 
 		// Straights & straight flushes
 		var valcount = 0;
 		var seenSuits = Array(4).fill(false);
-		var straightSuits = Array(4).fill(0); //named this way because it's used in straight flush detect
+		var straightSuits = Array(4).fill(0); // named this way because it's used in straight flush detect
 
 		for (let i = 0; i < 14; ++i) {
 			if (values[i] > 0)
@@ -191,7 +215,119 @@ class ScoredHand {
 				straight = i;
 		}
 
+		// This can probably be piled into the other for loop at some point, but do be wary that
+		// this one starts at ONE and NOT ZERO. This is to make sure that the low Ace entry is ignored.
+		// Identify 4 of a kinds, 3 of a kinds, pairs, and highest cards
 
+		// DO REMEMEMBER that regular flushes need to generate their own 'kicker list', and that
+		// the highest kicker might actually be in bestPair or best3ofaKind.
+
+		var amount = 0;
+		for (let i = 1; i < 14; ++i) {
+			amount = values[i];
+
+			switch (amount) {
+				case 4:
+					// a check just in case there are more than 7 cards available to make a hand from
+					if (has4ofaKind > highest[0]) {
+						highest[0] = has4ofaKind;
+					}
+					has4ofaKind = i;
+					break;
+
+				case 3:
+					// If there's multiple 3-kinds, demote lower to pair
+					if (best3ofaKind > bestPair)
+						bestPair = best3ofaKind;
+					best3ofaKind = i;
+					break;
+
+				case 2: // pair
+					// If there's a 3 pair and 3rd pair has next highest card, use that as a kicker
+					if (nextPair > highest[0])
+						highest[0] = nextPair;
+					nextPair = bestPair;
+					bestPair = i;
+					break;
+
+				case 1:
+					for (let j = 4; j > 0; --j) {
+						highest[j] = highest[j - 1];
+					}
+					highest[0] = i;
+					break;
+
+				default: // if there are no cards of this value at all, we have nothing to do here.
+					break;
+			}
+		}
+
+		// Time to actually calculate the score and which cards are being used for the hand.
+		// Note that card face values are one lower at this point than listed on the card.
+
+		var tempScore = 0;
+		var tempKicker = 0;
+		if (strFlush) {
+			tempScore = C_STR_FLUSH;
+			tempScore += (strFlush - O_STRAIGHT) * C_STRAIGHT; // StrFlush rank is stored in Straight slot.
+		}
+		else if (has4ofaKind >= 0) {
+			tempScore = has4ofaKind * C_4_KIND;
+			tempKicker = highest[0];
+
+			// These next two checks make sure the kicker used is actually the highest available.
+			if (best3ofaKind > tempKicker)
+				tempKicker = best3ofaKind;
+			if (bestPair > tempKicker)
+				tempKicker = bestPair;
+
+			tempScore += (tempKicker - O_FACEVALUE) * C_KICKERS[0];
+		}
+		else if (best3ofaKind >= 0 && bestPair >= 0) { // full house
+			tempScore = 2 * C_FH_FLUSH; // 2 = full house, 1 = flush
+			tempScore += best3ofaKind * C_3_KIND;
+			tempScore += bestPair * C_BEST_PAIR;
+		}
+		else if (flushes.length != 0) {
+			// There's a flush! Time for complex stuff!
+			// tempScore = 1 * C_FH_FLUSH; // 2 = full house, 1 = flush
+			/*
+			let suitID = 0;
+			highest.fill(-1);
+			for (let k = 0; k < flushes.length; ++k) {
+				suitID = flushes[k];
+				for (let j = 0; j < values.length; j++) {
+
+				}
+			}
+			*/
+			// Skipping regular flush handling right now because supporting 10+ cards to build a hand
+			// from leads to nightmares since there may be flushes of multiple suits and the flush with the
+			// best set of 5 needs to be chosen.
+		}
+		else if (straight > 0) {
+			tempScore = (straight - O_STRAIGHT) * C_STRAIGHT;
+		}
+		else if (best3ofaKind >= 0) {
+			tempScore = best3ofaKind * C_3_KIND;
+		}
+		else if (bestPair >= 0) { // Pair or two pair
+			tempScore = bestPair * C_BEST_PAIR;
+			if (nextPair >= 0) { // two pair
+				tempScore += nextPair * C_NEXT_PAIR;
+				tempScore += (highest[0] - O_FACEVALUE) * C_KICKERS[0];
+			} else { // one pair. This needs 3 kicker cards.
+				for (let i = 0; i < 3; ++i)
+					tempScore += (highest[i] - O_FACEVALUE) * C_KICKERS[i];
+			}
+		}
+		else { // Resorting to all kickers (High card)
+			len = highest.length;
+			for (let i = 0; i < len; ++i)
+				tempScore += (highest[i] - O_FACEVALUE) * C_KICKERS[i];
+		}
+
+		this.score = tempScore;
 	}
 }
 

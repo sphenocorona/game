@@ -1,0 +1,48 @@
+This file is provided as an explanation behind what's going on with some aspects of the default hand scoring
+algorithm, such as the derivation of constants and why the values going into this derivation are what they are.
+It is separated into a distinct file due to its length.
+
+---
+
+Multiplier derivations:
+SF slot:        14 * 3 * 11 * 14 * 14 * 13 * 13 * 13 * 13 * 12 * 11 = 341385748704
+4oaK slot:           3 * 11 * 14 * 14 * 13 * 13 * 13 * 13 * 12 * 11 =  24384696336
+Flush/FH slot:           11 * 14 * 14 * 13 * 13 * 13 * 13 * 12 * 11 =   8128232112
+Straight slot:                14 * 14 * 13 * 13 * 13 * 13 * 12 * 11 =    738930192
+3oaK slot:                         14 * 13 * 13 * 13 * 13 * 12 * 11 =     52780728
+1st pair slot:                          13 * 13 * 13 * 13 * 12 * 11 =      3770052
+2nd pair slot:                               13 * 13 * 13 * 12 * 11 =       290004
+1st kicker:                                       13 * 13 * 12 * 11 =        22308
+2nd kicker:                                            13 * 12 * 11 =         1716
+3rd kicker:                                                 12 * 11 =          132
+4th kicker:                                                      11 =           11
+5th kicker:                                           no multiplier =            1
+
+The factors listed here arise from the format of converting a hand to a single unambiguous numerical
+representation of that hand's worth, so it can be easily compared to other hands.
+
+The following should help explain where these numbers come from. Note that the "stored as x-y" here refers to
+the number range required to represent all versions of that combination.
+
+-----
+
+ROYAL FLUSH is just a straight flush with the highest possible straight.
+Straight flush can be stored as on/off, with the ranking determined by the Straight value.
+four of a kind can be stored as 0-13 (Must add an option for no 4oaK being present)
+
+the two below can be combined into a 0-2 value (none, flush, full house)
+full house can be stored as on/off, with the ranking determined by the 3oaK and first pair values.
+regular flush can be stored on/off, with the raw card values stored in the kicker slots.
+	this is why the kickers need extra 'room' to store pairs/3oaKs
+
+straights can be stored as 0-10 (max card of straight goes from 5 to A, plus no straight)
+3 of a kind can be stored as 0-13 (Must add an option for no 3oaK being present)
+
+first pair can be stored as 0-13 (Must add an option for no pair being present)
+second pair can be stored as 0-12 (same as above, but two A pairs would be a 4 of a kind)
+
+first kicker can be stored as 0-12
+second kicker can be stored as 0-12 (having a pair is OK in a flush)
+third kicker can be stored as 0-12 (having 3 of a kind here is OK in a flush)
+fourth kicker can be stored as 0-11 (a four of a kind would be used instead of a flush)
+fifth kicker can be stored as 0-10 (4oaK and full house would both be used instead of a flush)
