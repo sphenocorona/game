@@ -62,6 +62,14 @@ ws.onmessage = (event) => {
 		case "u":
 			state = JSON.parse(arg);
 
+			if (state.private.room) {
+				document.getElementById("room_code_box").style.display = "block";
+				document.getElementById("room_code").innerText = state.private.room;
+			} else {
+				document.getElementById("room_code_box").style.display = "none";
+				document.getElementById("room_code").innerText = "";
+			}
+
 			break;
 	}
 }
@@ -93,6 +101,8 @@ function message (text, italic) {
 
 function changeUsername () {
 	ws.send(`u${document.getElementById("uname").value}`);
+	document.getElementById("uname").placeholder = document.getElementById("uname").value;
+	document.getElementById("uname").value = "";
 }
 
 function joinRoom () {
@@ -109,4 +119,5 @@ function leaveRoom () {
 
 function sendMessage () {
 	ws.send(`s${document.getElementById("messagebox").value}`);
+	document.getElementById("messagebox").value = "";
 }
