@@ -42,7 +42,7 @@ first pair can be stored as 0-13 (Must add an option for no pair being present)
 second pair can be stored as 0-12 (same as above, but two A pairs would be a 4 of a kind)
 
 first kicker can be stored as 0-12
-second kicker can be stored as 0-12 (having a pair is OK in a flush)
-third kicker can be stored as 0-12 (having 3 of a kind here is OK in a flush)
+second kicker can be stored as 0-12 (i *thought* having a pair was OK in a flush.)
+third kicker can be stored as 0-12 (i *thought* having 3 of a kind here was OK in a flush)
 fourth kicker can be stored as 0-11 (a four of a kind would be used instead of a flush)
 fifth kicker can be stored as 0-10 (4oaK and full house would both be used instead of a flush)

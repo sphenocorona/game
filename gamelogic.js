@@ -131,7 +131,7 @@ class ScoredHand {
 		var straight = 0;
 		var strFlush = 0;
 		var fullHouse = 0;
-		var has4ofaKind = -1;
+		var best4ofaKind = -1;
 		var best3ofaKind = -1;
 		var bestPair = -1;
 		var nextPair = -1;
@@ -229,10 +229,10 @@ class ScoredHand {
 			switch (amount) {
 				case 4:
 					// a check just in case there are more than 7 cards available to make a hand from
-					if (has4ofaKind > highest[0]) {
-						highest[0] = has4ofaKind;
+					if (best4ofaKind > highest[0]) {
+						highest[0] = best4ofaKind;
 					}
-					has4ofaKind = i;
+					best4ofaKind = i;
 					break;
 
 				case 3:
@@ -271,8 +271,8 @@ class ScoredHand {
 			tempScore = C_STR_FLUSH;
 			tempScore += (strFlush - O_STRAIGHT) * C_STRAIGHT; // StrFlush rank is stored in Straight slot.
 		}
-		else if (has4ofaKind >= 0) {
-			tempScore = has4ofaKind * C_4_KIND;
+		else if (best4ofaKind >= 0) {
+			tempScore = best4ofaKind * C_4_KIND;
 			tempKicker = highest[0];
 
 			// These next two checks make sure the kicker used is actually the highest available.
@@ -290,20 +290,20 @@ class ScoredHand {
 		}
 		else if (flushes.length != 0) {
 			// There's a flush! Time for complex stuff!
-			// tempScore = 1 * C_FH_FLUSH; // 2 = full house, 1 = flush
-			/*
-			let suitID = 0;
-			highest.fill(-1);
-			for (let k = 0; k < flushes.length; ++k) {
-				suitID = flushes[k];
-				for (let j = 0; j < values.length; j++) {
+			tempScore = 1 * C_FH_FLUSH; // 2 = full house, 1 = flush
+			let suitScores = Array(4).fill(0);
 
+			// Calculate the possible kicker scores so we can choose the highest one.
+			for (let i = 0; i < 4; ++i) {
+				suitsVals[i].sort(function(a, b){return b - a});
+				if (suits[i] >= 5) {
+					for (let j = 0; j < 5; ++j) {
+						suitScores[i] += (suitsVals[i][j] - O_FACEVALUE) * C_KICKERS[i];
+					}
 				}
 			}
-			*/
-			// Skipping regular flush handling right now because supporting 10+ cards to build a hand
-			// from leads to nightmares since there may be flushes of multiple suits and the flush with the
-			// best set of 5 needs to be chosen.
+			suitScores.sort(function(a, b){return b - a});
+			tempScore += suitScores[0];
 		}
 		else if (straight > 0) {
 			tempScore = (straight - O_STRAIGHT) * C_STRAIGHT;
